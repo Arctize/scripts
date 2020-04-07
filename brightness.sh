@@ -16,6 +16,19 @@
 # https://gist.github.com/sebastiencs/5d7227f388d93374cebdf72e783fbd6a
 
 
+# Lock to assert only a single instance is running
+LOCKFILE="/tmp/.`basename $0`.lock"
+TIMEOUT=0.1
+touch $LOCKFILE
+exec {FD}<>$LOCKFILE
+
+if ! flock -x -w $TIMEOUT $FD; then
+  echo "Failed to obtain a lock within $TIMEOUT seconds"
+  echo "Another instance of `basename $0` is probably running."
+  exit 1
+fi
+
+
 # Function to repeat a character (because seq is ugly)
 # arg $1: number of repetitions
 # arg $2: char to be printed
@@ -41,6 +54,7 @@ function send_notification {
 
 	# Send the notification
 	dunstify -i display-brightness-symbolic -r 2594 -u normal "$bar"
+	#dunstify -i NUL -r 2594 -u normal "  $bar"
 }
 
 case $1 in
